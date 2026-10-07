@@ -964,25 +964,23 @@ body.light .tool-button:hover{
 }
 
 .volume-icon{
-    width:32px;
-    height:32px;
-    border:none;
-    padding:0;
-    background:none;
+    width:22px;
+
     color:var(--gray);
-    font-size:18px;
+
+    font-size:16px;
+
     cursor:pointer;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    transition:color .2s ease, transform .2s ease;
+
+    transition:
+        color .2s ease,
+        transform .2s ease;
 }
 
 .volume-icon:hover{
     color:#fff;
     transform:scale(1.1);
 }
-
 
 .volume-slider{
     width:95px;
@@ -1714,7 +1712,6 @@ let repeat = false;
 
 let liked = false;
 
-let previousVolume = .8;
 
 
 /* =====================================================
@@ -2243,26 +2240,29 @@ progress.addEventListener(
    VOLUME
 ===================================================== */
 
-const savedVolume =
-    localStorage.getItem("music-player-volume");
+const savedVolume = localStorage.getItem("music-player-volume");
 
-let initialVolume =
-    savedVolume !== null
-        ? Number(savedVolume)
-        : 0.8;
+let currentVolume = savedVolume !== null
+    ? Number(savedVolume)
+    : 0.8;
 
-initialVolume =
-    Number.isFinite(initialVolume)
-        ? Math.max(0, Math.min(1, initialVolume))
-        : 0.8;
-
-audio.volume = initialVolume;
-volumeSlider.value = initialVolume;
-
-if(initialVolume > 0){
-    previousVolume = initialVolume;
+if(!Number.isFinite(currentVolume)){
+    currentVolume = 0.8;
 }
 
+currentVolume = Math.max(0, Math.min(1, currentVolume));
+
+let previousVolume = currentVolume > 0
+    ? currentVolume
+    : 0.8;
+
+
+/* مقدار اولیه واقعی صدای HTML Audio */
+audio.volume = currentVolume;
+volumeSlider.value = String(currentVolume);
+
+
+/* تغییر واقعی صدا */
 function setVolume(value){
 
     let volume = Number(value);
@@ -2273,8 +2273,11 @@ function setVolume(value){
 
     volume = Math.max(0, Math.min(1, volume));
 
+    /* این خط مستقیماً صدای آهنگ را تغییر می‌دهد */
     audio.volume = volume;
-    volumeSlider.value = volume;
+
+    /* هماهنگ کردن اسلایدر */
+    volumeSlider.value = String(volume);
 
     if(volume > 0){
         previousVolume = volume;
@@ -2288,20 +2291,32 @@ function setVolume(value){
     updateVolumeIcon();
 }
 
+
+/* حرکت اسلایدر */
 volumeSlider.addEventListener(
     "input",
-    () => {
-        setVolume(volumeSlider.value);
+    function(event){
+        setVolume(event.target.value);
     }
 );
 
+volumeSlider.addEventListener(
+    "change",
+    function(event){
+        setVolume(event.target.value);
+    }
+);
+
+
+/* کلیک روی آیکون = قطع/وصل صدا */
 volumeIcon.addEventListener(
     "click",
-    () => {
+    function(){
 
         if(audio.volume > 0){
 
             previousVolume = audio.volume;
+
             setVolume(0);
 
         }else{
@@ -2317,6 +2332,8 @@ volumeIcon.addEventListener(
     }
 );
 
+
+/* آیکون صدا */
 function updateVolumeIcon(){
 
     const value = Number(audio.volume);
@@ -2329,86 +2346,40 @@ function updateVolumeIcon(){
     }else if(value < 0.33){
 
         volumeIcon.textContent = "🔈";
-        volumeIcon.title = "بی‌صدا";
+        volumeIcon.title = "قطع صدا";
 
     }else if(value < 0.66){
 
         volumeIcon.textContent = "🔉";
-        volumeIcon.title = "بی‌صدا";
+        volumeIcon.title = "قطع صدا";
 
     }else{
 
         volumeIcon.textContent = "🔊";
-        volumeIcon.title = "بی‌صدا";
+        volumeIcon.title = "قطع صدا";
 
     }
 
 }
 
-/* =====================================================
-   VOLUME ICON CLICK
-===================================================== */
 
-volumeIcon.addEventListener(
-    "click",
-    () => {
+/* اگر ولوم از جای دیگری تغییر کرد، آیکون هم هماهنگ شود */
+audio.addEventListener(
+    "volumechange",
+    function(){
 
-        if(audio.volume > 0){
+        const value = Number(audio.volume);
 
-            previousVolume =
-                audio.volume;
+        volumeSlider.value = String(value);
 
-            audio.volume = 0;
-
-            volumeSlider.value = 0;
-
-        }else{
-
-            audio.volume =
-                previousVolume || .8;
-
-            volumeSlider.value =
-                audio.volume;
-
+        if(value > 0){
+            previousVolume = value;
         }
 
         updateVolumeIcon();
 
     }
 );
-
-
-/* =====================================================
-   VOLUME ICON
-===================================================== */
-
-function updateVolumeIcon(){
-
-    const value =
-        Number(
-            volumeSlider.value
-        );
-
-
-    if(value === 0){
-
-        volumeIcon.textContent =
-            "🔇";
-
-    }else if(value < .5){
-
-        volumeIcon.textContent =
-            "🔉";
-
-    }else{
-
-        volumeIcon.textContent =
-            "🔊";
-
-    }
-
-}
-
 
 /* =====================================================
    LIKE
